@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Shop {
+  id           Int        @id @default(autoincrement())
+  shopDomain   String     @unique
+  accessToken  String
+  shipments    Shipment[]
+}
+
+model Shipment {
+  id          Int     @id @default(autoincrement())
+  shopId      Int
+  orderId     String
+  shipmentId  String
+  trackingId  String
+  status      String
+  shop        Shop    @relation(fields: [shopId], references: [id])
+}
