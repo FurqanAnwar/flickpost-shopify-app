@@ -5,14 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { createShopifyAppBridge } from "@/lib/appBridge";
 
 import { Page, Card } from "@shopify/polaris";
-import { LoadingSpinner } from "./components/Spinner";
-import { OrdersNotFound } from "./components/OrdersNotFound";
-import { OrdersTable, Order } from "./components/OrdersTable";
+import { LoadingSpinner } from "./components/Spinner/Spinner";
+import { OrdersNotFound } from "./components/Orders/NotFound";
+import { OrdersTable } from "./components/Orders/Table";
+import { Order } from "./types/order";
 
 export default function Dashboard() {
   const params = useSearchParams();
 
-  // Default to empty string to avoid changing deps size
   const host = params.get("host") || "";
   const shop = params.get("shop") || "";
 
