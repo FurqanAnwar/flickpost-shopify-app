@@ -1,27 +1,23 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createShopifyAppBridge } from "@/lib/appBridge";
-
 import { Page, Card } from "@shopify/polaris";
 import { LoadingSpinner } from "./components/Spinner/Spinner";
 import { OrdersNotFound } from "./components/Orders/NotFound";
 import { OrdersTable } from "./components/Orders/Table";
 import { Order } from "./types/order";
+import { AppHeader } from "./components/Navigation/AppHeader";
 
 export default function Dashboard() {
   const params = useSearchParams();
-
   const host = params.get("host") || "";
   const shop = params.get("shop") || "";
-
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!host || !shop) return;
-
     createShopifyAppBridge(host);
     fetchOrders(shop);
   }, [host, shop]);
@@ -30,7 +26,6 @@ export default function Dashboard() {
     try {
       const res = await fetch(`/api/orders?shop=${shop}`);
       if (!res.ok) throw new Error("Failed to fetch orders");
-
       const data = await res.json();
       setOrders(data.orders || []);
     } catch (err) {
@@ -42,29 +37,26 @@ export default function Dashboard() {
   };
 
   const bookShipment = async (orderId: string) => {
-    try {
-      await fetch("/api/book-shipment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
-      });
-      alert("Shipment booked!");
-    } catch (err) {
-      console.error("Shipment booking failed", err);
-    }
+    // Navigate to book shipment page with orderId pre-filled
+    const searchParams = new URLSearchParams(window.location.search);
+    searchParams.set("orderId", orderId);
+    window.location.href = `/book-shipment?${searchParams.toString()}`;
   };
 
   return (
-    <Page title="Flickpost Shipping Dashboard">
-      <Card>
-        {loading ? (
-          <LoadingSpinner />
-        ) : orders.length > 0 ? (
-          <OrdersTable orders={orders} onBookShipment={bookShipment} />
-        ) : (
-          <OrdersNotFound />
-        )}
-      </Card>
-    </Page>
+    <>
+      <AppHeader activeTab="orders" />
+      <Page title="Orders">
+        <Card>
+          {loading ? (
+            <LoadingSpinner />
+          ) : orders.length > 0 ? (
+            <OrdersTable orders={orders} onBookShipment={bookShipment} />
+          ) : (
+            <OrdersNotFound />
+          )}
+        </Card>
+      </Page>
+    </>
   );
 }

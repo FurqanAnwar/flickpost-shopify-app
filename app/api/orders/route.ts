@@ -14,15 +14,14 @@ export async function GET(req: Request) {
       headers: {
         "X-Shopify-Access-Token": accessToken,
         "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "yes"
       },
     }
   );
 
 
   const data = await response.json();
-
-  console.log("Shopify response:", JSON.stringify(data, null, 2)); // <-- check orders
-
+  
   const orders = data?.orders?.map((order: any) => ({
     id: order.id,
     orderNumber: order.order_number,
