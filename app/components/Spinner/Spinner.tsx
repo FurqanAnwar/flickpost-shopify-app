@@ -1,3 +1,4 @@
+"use client";
 import { Box, Spinner as PolarisSpinner } from "@shopify/polaris";
 
 export const LoadingSpinner = () => {

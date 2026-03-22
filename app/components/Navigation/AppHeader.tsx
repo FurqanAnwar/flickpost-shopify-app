@@ -2,14 +2,13 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import styles from "./AppHeader.module.css";
-
 type Tab = "orders" | "book-shipment" | "consignments";
 
 interface AppHeaderProps {
   activeTab: Tab;
 }
 
-export function AppHeader({ activeTab }: AppHeaderProps) {
+function AppHeader({ activeTab }: AppHeaderProps) {
   const params = useSearchParams();
   const shop = params.get("shop") || "";
   const host = params.get("host") || "";
@@ -47,3 +46,5 @@ export function AppHeader({ activeTab }: AppHeaderProps) {
     </header>
   );
 }
+
+export default AppHeader;
