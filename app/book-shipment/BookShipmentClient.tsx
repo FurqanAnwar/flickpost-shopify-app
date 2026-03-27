@@ -29,12 +29,18 @@ interface ShipmentFormData {
   senderCity: string;
   senderState: string;
   senderPostalCode: string;
+  senderContactNumber: string;
+  senderEmail: string;
+  senderTaxId?: string;
   receiverName: string;
   receiverAddressLine1: string;
   receiverAddressLine2: string;
   receiverCity: string;
   receiverState: string;
   receiverPostalCode: string;
+  receiverContactNumber: string;
+  receiverEmail: string;
+  receiverTaxId?: string;
   purposeOfShipment: string;
   declaredValue: string;
   declaredWeight: string;
@@ -50,12 +56,18 @@ const INITIAL_FORM: ShipmentFormData = {
   senderCity: "",
   senderState: "",
   senderPostalCode: "",
+  senderContactNumber: "",
+  senderEmail: "",
+  senderTaxId: "",
   receiverName: "",
   receiverAddressLine1: "",
   receiverAddressLine2: "",
   receiverCity: "",
   receiverState: "",
   receiverPostalCode: "",
+  receiverContactNumber: "",
+  receiverEmail: "",
+  receiverTaxId: "",
   purposeOfShipment: "",
   declaredValue: "",
   declaredWeight: "",
@@ -103,17 +115,14 @@ export default function BookShipmentClient() {
     const fetchOrderDetails = async () => {
       try {
         setLoadingOrder(true);
-        
         const res = await fetch(`/api/orders/${selectedOrderId}?shop=${shop}`);
-        
         if (!res.ok) throw new Error("Failed to fetch order details");
-        
         const data = await res.json();
-        
         if (data?.shipmentDefaults) {
           setForm((prev) => ({ ...prev, ...data.shipmentDefaults }));
         }
       } catch (err) {
+        console.error(err);
       } finally {
         setLoadingOrder(false);
       }
@@ -121,7 +130,6 @@ export default function BookShipmentClient() {
 
     fetchOrderDetails();
   }, [shop, selectedOrderId]);
-
 
   const setField = (field: keyof ShipmentFormData) => (value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -136,18 +144,24 @@ export default function BookShipmentClient() {
       "senderAddressLine1",
       "senderCity",
       "senderPostalCode",
+      "senderContactNumber",
+      "senderEmail",
       "receiverName",
       "receiverAddressLine1",
       "receiverCity",
       "receiverPostalCode",
+      "receiverContactNumber",
+      "receiverEmail",
       "purposeOfShipment",
       "declaredValue",
       "declaredWeight",
     ];
     const newErrors: Partial<Record<keyof ShipmentFormData, string>> = {};
+    
     required.forEach((field) => {
-      if (!form[field].trim()) newErrors[field] = "This field is required";
+      if (!form[field]?.trim()) newErrors[field] = "This field is required";
     });
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -176,123 +190,131 @@ export default function BookShipmentClient() {
       {loadingOrder ? (
         <LoadingSpinner />
       ) : (
-          <>
-            <AppHeader activeTab="book-shipment" />
-            <Page title="Book Shipment" backAction={{ content: "Orders", url: `/?shop=${shop}` }}>
-              <BlockStack gap="500">
-                {submitted && (
-                  <Banner title="Shipment booked successfully" tone="success" onDismiss={() => setSubmitted(false)}>
-                    <p>Your shipment request has been submitted and is being processed.</p>
-                  </Banner>
-                )}
+        <>
+          <AppHeader activeTab="book-shipment" />
+          <Page title="Book Shipment" backAction={{ content: "Orders", url: `/?shop=${shop}` }}>
+            <BlockStack gap="500">
+              {submitted && (
+                <Banner title="Shipment booked successfully" tone="success" onDismiss={() => setSubmitted(false)}>
+                  <p>Your shipment request has been submitted and is being processed.</p>
+                </Banner>
+              )}
 
-                <Card>
-                  <BlockStack gap="400">
-                    <Text as="h2" variant="headingMd">
-                      Shipment Route
-                    </Text>
-                    <FormLayout>
-                      <FormLayout.Group>
-                        <Select
-                          label="Origin Country"
-                          options={COUNTRY_OPTIONS}
-                          value={form.originCountry}
-                          onChange={setField("originCountry")}
-                          error={errors.originCountry}
-                        />
-                        <Select
-                          label="Destination Country"
-                          options={COUNTRY_OPTIONS}
-                          value={form.destinationCountry}
-                          onChange={setField("destinationCountry")}
-                          error={errors.destinationCountry}
-                        />
-                      </FormLayout.Group>
-                    </FormLayout>
-                  </BlockStack>
-                </Card>
+              <Card>
+                <BlockStack gap="400">
+                  <Text as="h2" variant="headingMd">Shipment Route</Text>
+                  <FormLayout>
+                    <FormLayout.Group>
+                      <Select
+                        label="Origin Country"
+                        options={COUNTRY_OPTIONS}
+                        value={form.originCountry}
+                        onChange={setField("originCountry")}
+                        error={errors.originCountry}
+                      />
+                      <Select
+                        label="Destination Country"
+                        options={COUNTRY_OPTIONS}
+                        value={form.destinationCountry}
+                        onChange={setField("destinationCountry")}
+                        error={errors.destinationCountry}
+                      />
+                    </FormLayout.Group>
+                  </FormLayout>
+                </BlockStack>
+              </Card>
 
-                {/* Sender Details */}
-                <Card>
-                  <BlockStack gap="400">
-                    <Text as="h2" variant="headingMd">Sender Details</Text>
-                    <FormLayout>
-                      <TextField label="Full Name / Company" value={form.senderName} onChange={setField("senderName")} error={errors.senderName} autoComplete="name" />
-                      <TextField label="Address Line 1" value={form.senderAddressLine1} onChange={setField("senderAddressLine1")} error={errors.senderAddressLine1} autoComplete="address-line1" />
-                      <TextField label="Address Line 2 (optional)" value={form.senderAddressLine2} onChange={setField("senderAddressLine2")} autoComplete="address-line2" />
-                      <FormLayout.Group>
-                        <TextField label="City" value={form.senderCity} onChange={setField("senderCity")} error={errors.senderCity} autoComplete="address-level2" />
-                        <TextField label="State / Province" value={form.senderState} onChange={setField("senderState")} autoComplete="address-level1" />
-                        <TextField label="Postal Code" value={form.senderPostalCode} onChange={setField("senderPostalCode")} error={errors.senderPostalCode} autoComplete="postal-code" />
-                      </FormLayout.Group>
-                    </FormLayout>
-                  </BlockStack>
-                </Card>
+              {/* Sender Details */}
+              <Card>
+                <BlockStack gap="400">
+                  <Text as="h2" variant="headingMd">Sender Details</Text>
+                  <FormLayout>
+                    <TextField label="Full Name / Company" value={form.senderName} onChange={setField("senderName")} error={errors.senderName} autoComplete="name" />
+                    <TextField label="Address Line 1" value={form.senderAddressLine1} onChange={setField("senderAddressLine1")} error={errors.senderAddressLine1} autoComplete="address-line1" />
+                    <TextField label="Address Line 2 (optional)" value={form.senderAddressLine2} onChange={setField("senderAddressLine2")} autoComplete="address-line2" />
+                    <FormLayout.Group>
+                      <TextField label="City" value={form.senderCity} onChange={setField("senderCity")} error={errors.senderCity} autoComplete="address-level2" />
+                      <TextField label="State / Province" value={form.senderState} onChange={setField("senderState")} autoComplete="address-level1" />
+                      <TextField label="Postal Code" value={form.senderPostalCode} onChange={setField("senderPostalCode")} error={errors.senderPostalCode} autoComplete="postal-code" />
+                    </FormLayout.Group>
+                    <FormLayout.Group>
+                      <TextField label="Contact Number" value={form.senderContactNumber} onChange={setField("senderContactNumber")} error={errors.senderContactNumber} autoComplete="tel" />
+                      <TextField label="Email" value={form.senderEmail} onChange={setField("senderEmail")} error={errors.senderEmail} autoComplete="email" />
+                      <TextField label="Tax ID (optional)" value={form.senderTaxId} onChange={setField("senderTaxId")} autoComplete="off" />
+                    </FormLayout.Group>
+                  </FormLayout>
+                </BlockStack>
+              </Card>
 
-                {/* Receiver Details */}
-                <Card>
-                  <BlockStack gap="400">
-                    <Text as="h2" variant="headingMd">Receiver Details</Text>
-                    <FormLayout>
-                      <TextField label="Full Name / Company" value={form.receiverName} onChange={setField("receiverName")} error={errors.receiverName} autoComplete="name" />
-                      <TextField label="Address Line 1" value={form.receiverAddressLine1} onChange={setField("receiverAddressLine1")} error={errors.receiverAddressLine1} autoComplete="address-line1" />
-                      <TextField label="Address Line 2 (optional)" value={form.receiverAddressLine2} onChange={setField("receiverAddressLine2")} autoComplete="address-line2" />
-                      <FormLayout.Group>
-                        <TextField label="City" value={form.receiverCity} onChange={setField("receiverCity")} error={errors.receiverCity} autoComplete="address-level2" />
-                        <TextField label="State / Province" value={form.receiverState} onChange={setField("receiverState")} autoComplete="address-level1" />
-                        <TextField label="Postal Code" value={form.receiverPostalCode} onChange={setField("receiverPostalCode")} error={errors.receiverPostalCode} autoComplete="postal-code" />
-                      </FormLayout.Group>
-                    </FormLayout>
-                  </BlockStack>
-                </Card>
+              {/* Receiver Details */}
+              <Card>
+                <BlockStack gap="400">
+                  <Text as="h2" variant="headingMd">Receiver Details</Text>
+                  <FormLayout>
+                    <TextField label="Full Name / Company" value={form.receiverName} onChange={setField("receiverName")} error={errors.receiverName} autoComplete="name" />
+                    <TextField label="Address Line 1" value={form.receiverAddressLine1} onChange={setField("receiverAddressLine1")} error={errors.receiverAddressLine1} autoComplete="address-line1" />
+                    <TextField label="Address Line 2 (optional)" value={form.receiverAddressLine2} onChange={setField("receiverAddressLine2")} autoComplete="address-line2" />
+                    <FormLayout.Group>
+                      <TextField label="City" value={form.receiverCity} onChange={setField("receiverCity")} error={errors.receiverCity} autoComplete="address-level2" />
+                      <TextField label="State / Province" value={form.receiverState} onChange={setField("receiverState")} autoComplete="address-level1" />
+                      <TextField label="Postal Code" value={form.receiverPostalCode} onChange={setField("receiverPostalCode")} error={errors.receiverPostalCode} autoComplete="postal-code" />
+                    </FormLayout.Group>
+                    <FormLayout.Group>
+                      <TextField label="Contact Number" value={form.receiverContactNumber} onChange={setField("receiverContactNumber")} error={errors.receiverContactNumber} autoComplete="tel" />
+                      <TextField label="Email" value={form.receiverEmail} onChange={setField("receiverEmail")} error={errors.receiverEmail} autoComplete="email" />
+                      <TextField label="Tax ID (optional)" value={form.receiverTaxId} onChange={setField("receiverTaxId")} autoComplete="off" />
+                    </FormLayout.Group>
+                  </FormLayout>
+                </BlockStack>
+              </Card>
 
-                {/* Shipment Details */}
-                <Card>
-                  <BlockStack gap="400">
-                    <Text as="h2" variant="headingMd">Shipment Details</Text>
-                    <FormLayout>
-                      <Select label="Purpose of Shipment" options={PURPOSE_OPTIONS} value={form.purposeOfShipment} onChange={setField("purposeOfShipment")} error={errors.purposeOfShipment} />
-                      <FormLayout.Group>
-                        <TextField
-                          label="Declared Value"
-                          type="number"
-                          value={form.declaredValue}
-                          onChange={setField("declaredValue")}
-                          error={errors.declaredValue}
-                          autoComplete="off"
-                          connectedRight={
-                            <Select
-                              labelHidden
-                              label
-                              options={CURRENCY_OPTIONS}
-                              value={form.currency}
-                              onChange={setField("currency")}
-                            />
-                          }
-                        />
-                        <TextField
-                          label="Declared Weight (kg)"
-                          type="number"
-                          value={form.declaredWeight}
-                          onChange={setField("declaredWeight")}
-                          error={errors.declaredWeight}
-                          autoComplete="off"
-                          suffix="kg"
-                        />
-                      </FormLayout.Group>
-                    </FormLayout>
-                  </BlockStack>
-                </Card>
+              {/* Shipment Details */}
+              <Card>
+                <BlockStack gap="400">
+                  <Text as="h2" variant="headingMd">Shipment Details</Text>
+                  <FormLayout>
+                    <Select label="Purpose of Shipment" options={PURPOSE_OPTIONS} value={form.purposeOfShipment} onChange={setField("purposeOfShipment")} error={errors.purposeOfShipment} />
+                    <FormLayout.Group>
+                      <TextField
+                        label="Declared Value"
+                        type="number"
+                        value={form.declaredValue}
+                        onChange={setField("declaredValue")}
+                        error={errors.declaredValue}
+                        autoComplete="off"
+                        connectedRight={
+                          <Select
+                            labelHidden
+                            label
+                            options={CURRENCY_OPTIONS}
+                            value={form.currency}
+                            onChange={setField("currency")}
+                          />
+                        }
+                      />
+                      <TextField
+                        label="Declared Weight (kg)"
+                        type="number"
+                        value={form.declaredWeight}
+                        onChange={setField("declaredWeight")}
+                        error={errors.declaredWeight}
+                        autoComplete="off"
+                        suffix="kg"
+                      />
+                    </FormLayout.Group>
+                  </FormLayout>
+                </BlockStack>
+              </Card>
 
-                <Box paddingBlockEnd="600">
-                  <InlineStack gap="300" align="end">
-                    <Button url={`/?shop=${shop}`} variant="plain">Cancel</Button>
-                    <Button variant="primary" onClick={handleSubmit} loading={submitting}>Book Shipment</Button>
-                  </InlineStack>
-                </Box>
-              </BlockStack>
-            </Page>
-          </>
+              <Box paddingBlockEnd="600">
+                <InlineStack gap="300" align="end">
+                  <Button url={`/?shop=${shop}`} variant="plain">Cancel</Button>
+                  <Button variant="primary" onClick={handleSubmit} loading={submitting}>Book Shipment</Button>
+                </InlineStack>
+              </Box>
+            </BlockStack>
+          </Page>
+        </>
       )}
     </>
   );
