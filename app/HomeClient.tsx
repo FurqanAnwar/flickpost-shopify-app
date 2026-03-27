@@ -15,23 +15,30 @@ export default function Dashboard() {
   const params = useSearchParams();
   const host = params.get("host") || "";
   const shop = params.get("shop") || "";
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!host || !shop) return;
-    createShopifyAppBridge(host);
-    fetchOrders(shop);
+    if(host && process.env.NODE_ENV !== "development"){
+      createShopifyAppBridge(host);
+    }
+
+    if(shop){
+      fetchOrders(shop);
+    }
   }, [host, shop]);
 
   const fetchOrders = async (shop: string) => {
     try {
       const res = await fetch(`/api/orders?shop=${shop}`);
+      
       if (!res.ok) throw new Error("Failed to fetch orders");
+      
       const data = await res.json();
+      
       setOrders(data.orders || []);
     } catch (err) {
-      console.error(err);
       setOrders([]);
     } finally {
       setLoading(false);
@@ -40,7 +47,9 @@ export default function Dashboard() {
 
   const bookShipment = async (orderId: string) => {
     const searchParams = new URLSearchParams(window.location.search);
+    
     searchParams.set("orderId", orderId);
+    
     window.location.href = `/book-shipment?${searchParams.toString()}`;
   };
 
